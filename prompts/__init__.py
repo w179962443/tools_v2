@@ -1,0 +1,1 @@
+"""Prompt templates used by tools_v2 command-line workflows."""

@@ -1,0 +1,48 @@
+# Core dependencies
+paddlepaddle>=2.5.0
+paddleocr>=2.7.0
+nudenet>=3.4.0
+opencv-python>=4.8.0
+Pillow>=9.0.0
+numpy>=1.24.0
+
+# Progress and CLI utilities
+tqdm>=4.65.0
+
+# Audio/video transcription
+openai-whisper>=20231117
+torch>=2.0.0
+torchaudio>=2.0.0
+ffmpeg-python>=0.2.0
+opencc-python-reimplemented>=0.1.7
+
+# OpenAI-compatible LLM calls for transcript cleanup and study notes
+openai>=1.0.0
+
+# Realtime transcription web app
+Flask>=2.3.0
+Flask-CORS>=4.0.0
+sounddevice>=0.4.6
+librosa>=0.10.0
+scipy>=1.11.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+
+# Screen subtitle OCR + translation GUI
+PyQt5>=5.15.0
+pytesseract>=0.3.10
+tencentcloud-sdk-python>=3.0.0
+
+# Optional: WhisperX speaker diarization
+# whisperx
+# pyannote.audio>=3.1.0
+
+# Optional: CLIP zero-shot detector (CLIPDetector)
+# pip install openai-clip torch
+# openai-clip
+# torch>=2.0.0
+
+# Optional: Falconsai HuggingFace ViT detector (FalconsaiDetector)
+# pip install transformers torch
+# transformers>=4.35.0
+# torch>=2.0.0
