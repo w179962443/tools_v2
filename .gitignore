@@ -33,6 +33,9 @@ htmlcov/
 .env.*
 *.log
 
+# Local credential files
+config/aliyun_ocr_config.json
+
 # Editors and OS files
 .idea/
 .DS_Store

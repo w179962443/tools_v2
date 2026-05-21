@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Run the screen subtitle OCR + translation GUI."""
+"""Run the screen subtitle OCR + translation GUI.
+
+Usage examples:
+    python scripts/subtitle_translator_gui.py
+    python scripts/subtitle_translator_gui.py --ocr-lang eng --target zh
+"""
 
 from __future__ import annotations
 
@@ -15,7 +20,6 @@ from tools.subtitle_translation_tool import (  # noqa: E402
     SubtitleTranslatorConfig,
     TencentTranslator,
 )
-
 
 try:
     from PyQt5.QtCore import QPoint, QRect, QThread, Qt, pyqtSignal
@@ -92,7 +96,9 @@ class MonitorThread(QThread):
     translation_completed = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, bbox: tuple[int, int, int, int], config: SubtitleTranslatorConfig) -> None:
+    def __init__(
+        self, bbox: tuple[int, int, int, int], config: SubtitleTranslatorConfig
+    ) -> None:
         super().__init__()
         self.bbox = bbox
         self.config = config
@@ -195,7 +201,9 @@ class SubtitleTranslatorWindow(QMainWindow):
         lang_layout.addWidget(self.target_lang_input)
         config_layout.addLayout(lang_layout)
 
-        api_hint = QLabel("腾讯云密钥从环境变量 TENCENT_SECRET_ID / TENCENT_SECRET_KEY 读取")
+        api_hint = QLabel(
+            "腾讯云密钥从环境变量 TENCENT_SECRET_ID / TENCENT_SECRET_KEY 读取"
+        )
         api_hint.setStyleSheet("color: #667085;")
         config_layout.addWidget(api_hint)
         config_group.setLayout(config_layout)
@@ -311,10 +319,24 @@ class SubtitleTranslatorWindow(QMainWindow):
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Start the subtitle translator GUI.")
-    parser.add_argument("--stable-duration", type=float, default=None, help="Initial stable duration seconds")
-    parser.add_argument("--capture-interval", type=float, default=None, help="Initial capture interval seconds")
-    parser.add_argument("--ocr-lang", default=None, help="Initial OCR language, e.g. chi_sim+eng")
-    parser.add_argument("--target", default=None, help="Initial target language, e.g. zh")
+    parser.add_argument(
+        "--stable-duration",
+        type=float,
+        default=None,
+        help="Initial stable duration seconds",
+    )
+    parser.add_argument(
+        "--capture-interval",
+        type=float,
+        default=None,
+        help="Initial capture interval seconds",
+    )
+    parser.add_argument(
+        "--ocr-lang", default=None, help="Initial OCR language, e.g. chi_sim+eng"
+    )
+    parser.add_argument(
+        "--target", default=None, help="Initial target language, e.g. zh"
+    )
     args = parser.parse_args()
 
     config = SubtitleTranslatorConfig.from_env()

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Merge, deduplicate, classify, and export OneTab text files."""
+"""Merge, deduplicate, classify, and export OneTab text files.
+
+Usage examples:
+    python scripts/process_onetab.py --input d:/demo-project-onetab
+    python scripts/process_onetab.py --input d:/demo-project-onetab --output d:/output
+"""
 
 from __future__ import annotations
 
@@ -9,7 +14,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from tools.text_processing_tool import ONETAB_CATEGORIES, process_onetab_files  # noqa: E402
+from tools.text_processing_tool import (
+    ONETAB_CATEGORIES,
+    process_onetab_files,
+)  # noqa: E402
 
 
 def main() -> int:
@@ -22,7 +30,9 @@ Examples:
   python scripts/process_onetab.py --input d:\\demo-project-onetab --output d:\\output
         """,
     )
-    parser.add_argument("--input", required=True, help="Directory containing OneTab .txt exports")
+    parser.add_argument(
+        "--input", required=True, help="Directory containing OneTab .txt exports"
+    )
     parser.add_argument("--output", help="Output directory (default: <input>/output)")
     parser.add_argument(
         "--separator-interval",

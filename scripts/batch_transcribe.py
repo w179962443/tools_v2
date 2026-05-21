@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Batch-transcribe all supported audio/video files in a directory."""
+"""Batch-transcribe all supported audio/video files in a directory.
+
+Usage examples:
+    python scripts/batch_transcribe.py ./media -m turbo -l zh
+    python scripts/batch_transcribe.py ./media --recursive --skip-existing
+"""
 
 from __future__ import annotations
 
@@ -25,11 +30,21 @@ def main() -> int:
     )
     parser.add_argument("directory", help="Directory to scan")
     parser.add_argument("-m", "--model", default="turbo", choices=WHISPER_MODELS)
-    parser.add_argument("-l", "--language", default="zh", help="Language code (default: zh)")
+    parser.add_argument(
+        "-l", "--language", default="zh", help="Language code (default: zh)"
+    )
     parser.add_argument("-d", "--model-dir", help="Whisper model cache directory")
-    parser.add_argument("-r", "--recursive", action="store_true", help="Scan subdirectories")
-    parser.add_argument("--skip-existing", action="store_true", help="Skip media files with sibling .csv files")
-    parser.add_argument("--dry-run", action="store_true", help="List work without transcribing")
+    parser.add_argument(
+        "-r", "--recursive", action="store_true", help="Scan subdirectories"
+    )
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        help="Skip media files with sibling .csv files",
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="List work without transcribing"
+    )
     parser.add_argument(
         "--no-force-simplified",
         action="store_true",

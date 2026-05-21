@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Run the realtime Whisper transcription web app."""
+"""Run the realtime Whisper transcription web app.
+
+Usage examples:
+    python scripts/realtime_transcriber_web.py
+    python scripts/realtime_transcriber_web.py --host 127.0.0.1 --port 5001
+"""
 
 from __future__ import annotations
 
@@ -9,18 +14,42 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from tools.realtime_transcription_tool import DEFAULT_REALTIME_CONFIG, run_realtime_server  # noqa: E402
+from tools.realtime_transcription_tool import (
+    DEFAULT_REALTIME_CONFIG,
+    run_realtime_server,
+)  # noqa: E402
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Start the realtime transcription web server.")
-    parser.add_argument("--host", default="0.0.0.0", help="Host to bind (default: 0.0.0.0)")
-    parser.add_argument("--port", type=int, default=5000, help="Port to bind (default: 5000)")
+    parser = argparse.ArgumentParser(
+        description="Start the realtime transcription web server."
+    )
+    parser.add_argument(
+        "--host", default="0.0.0.0", help="Host to bind (default: 0.0.0.0)"
+    )
+    parser.add_argument(
+        "--port", type=int, default=5000, help="Port to bind (default: 5000)"
+    )
     parser.add_argument("--debug", action="store_true", help="Enable Flask debug mode")
-    parser.add_argument("--output-dir", default="recordings", help="Transcript output directory")
-    parser.add_argument("--model", default=DEFAULT_REALTIME_CONFIG["model_name"], help="Default Whisper model")
-    parser.add_argument("--language", default=DEFAULT_REALTIME_CONFIG["language"], help="Default language")
-    parser.add_argument("--interval", type=float, default=DEFAULT_REALTIME_CONFIG["transcribe_interval"], help="Transcription interval seconds")
+    parser.add_argument(
+        "--output-dir", default="recordings", help="Transcript output directory"
+    )
+    parser.add_argument(
+        "--model",
+        default=DEFAULT_REALTIME_CONFIG["model_name"],
+        help="Default Whisper model",
+    )
+    parser.add_argument(
+        "--language",
+        default=DEFAULT_REALTIME_CONFIG["language"],
+        help="Default language",
+    )
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=DEFAULT_REALTIME_CONFIG["transcribe_interval"],
+        help="Transcription interval seconds",
+    )
     parser.add_argument("--gpu", action="store_true", help="Load Whisper on CUDA")
     args = parser.parse_args()
 

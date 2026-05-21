@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy this file to aliyun_ocr_config.json and fill in your Alibaba Cloud AccessKey values.",
+  "access_key_id": "",
+  "access_key_secret": "",
+  "security_token": "",
+  "endpoint": "ocr-api.cn-hangzhou.aliyuncs.com"
+}

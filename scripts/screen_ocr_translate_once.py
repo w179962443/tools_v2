@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""OCR and translate a screen region once."""
+"""OCR and translate a screen region once.
+
+Usage examples:
+    python scripts/screen_ocr_translate_once.py 100 200 900 500
+    python scripts/screen_ocr_translate_once.py 100 200 900 500 --output-json out.json
+"""
 
 from __future__ import annotations
 
@@ -17,16 +22,26 @@ from tools.subtitle_translation_tool import (  # noqa: E402
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Capture one screen region, OCR it, and translate it.")
+    parser = argparse.ArgumentParser(
+        description="Capture one screen region, OCR it, and translate it."
+    )
     parser.add_argument("x1", type=int)
     parser.add_argument("y1", type=int)
     parser.add_argument("x2", type=int)
     parser.add_argument("y2", type=int)
-    parser.add_argument("--source", default=None, help="Source language (default: env/config auto)")
-    parser.add_argument("--target", default=None, help="Target language (default: env/config zh)")
-    parser.add_argument("--ocr-lang", default=None, help="Tesseract OCR language (default: chi_sim+eng)")
+    parser.add_argument(
+        "--source", default=None, help="Source language (default: env/config auto)"
+    )
+    parser.add_argument(
+        "--target", default=None, help="Target language (default: env/config zh)"
+    )
+    parser.add_argument(
+        "--ocr-lang", default=None, help="Tesseract OCR language (default: chi_sim+eng)"
+    )
     parser.add_argument("--tesseract-cmd", default=None, help="Path to tesseract.exe")
-    parser.add_argument("--no-preprocess", action="store_true", help="Disable OCR preprocessing")
+    parser.add_argument(
+        "--no-preprocess", action="store_true", help="Disable OCR preprocessing"
+    )
     parser.add_argument("--output-json", help="Write result JSON to a file")
     args = parser.parse_args()
 

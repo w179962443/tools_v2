@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Transcribe one audio/video file with optional speaker diarization."""
+"""Transcribe one audio/video file with optional speaker diarization.
+
+Usage examples:
+    python scripts/audio_to_text_diarize.py audio.mp3 -m turbo -l zh
+    python scripts/audio_to_text_diarize.py audio.mp3 -t hf_xxxx --min-speakers 2
+"""
 
 from __future__ import annotations
 
@@ -49,10 +54,16 @@ Set HF_TOKEN in the environment instead of passing -t to enable diarization.
         default=os.environ.get("HF_TOKEN"),
         help="HuggingFace token for pyannote speaker diarization",
     )
-    parser.add_argument("-o", "--output", help="Output CSV path (default: <input>_diarize.csv)")
+    parser.add_argument(
+        "-o", "--output", help="Output CSV path (default: <input>_diarize.csv)"
+    )
     parser.add_argument("-d", "--model-dir", help="Whisper model cache directory")
-    parser.add_argument("--min-speakers", type=int, default=None, help="Minimum speaker count")
-    parser.add_argument("--max-speakers", type=int, default=None, help="Maximum speaker count")
+    parser.add_argument(
+        "--min-speakers", type=int, default=None, help="Minimum speaker count"
+    )
+    parser.add_argument(
+        "--max-speakers", type=int, default=None, help="Maximum speaker count"
+    )
     parser.add_argument(
         "--no-force-simplified",
         action="store_true",

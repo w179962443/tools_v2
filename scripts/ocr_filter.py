@@ -6,8 +6,9 @@ Reads every image file in an input directory, runs PaddleOCR on it,
 and moves images whose extracted text exceeds --min-chars characters to
 the output directory.
 
-Run from the project root:
+Usage examples:
     python scripts/ocr_filter.py --input-dir ./images --output-dir ./text_images
+    python scripts/ocr_filter.py --input-dir ./images --output-dir ./out --dry-run
 """
 
 import argparse

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Create subtitles, raw transcript text, polished transcript, and notes from video."""
+"""Create subtitles, transcript text, polished text, and notes from video.
+
+Usage examples:
+    python scripts/video_to_subtitle_notes.py lecture.mp4 -m turbo -l zh
+    python scripts/video_to_subtitle_notes.py lecture.mp4 -o ./lecture_outputs
+    python scripts/video_to_subtitle_notes.py lecture.mp4 --skip-llm
+"""
 
 from __future__ import annotations
 
@@ -34,7 +40,11 @@ The LLM call reads DASHSCOPE_API_KEY or OPENAI_API_KEY unless --api-key is passe
         """,
     )
     parser.add_argument("video_file", help="Input video/audio file")
-    parser.add_argument("-o", "--output-dir", help="Output directory (default: <video>, with random suffix on conflict)")
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        help="Output directory (default: <video>, with random suffix on conflict)",
+    )
     parser.add_argument(
         "-m",
         "--whisper-model",
@@ -42,7 +52,12 @@ The LLM call reads DASHSCOPE_API_KEY or OPENAI_API_KEY unless --api-key is passe
         choices=WHISPER_MODELS,
         help="Whisper model size (default: turbo)",
     )
-    parser.add_argument("-l", "--language", default="zh", help="Language code: zh, en, auto, etc. (default: zh)")
+    parser.add_argument(
+        "-l",
+        "--language",
+        default="zh",
+        help="Language code: zh, en, auto, etc. (default: zh)",
+    )
     parser.add_argument("-d", "--model-dir", help="Whisper model cache directory")
     parser.add_argument(
         "--no-force-simplified",
@@ -70,10 +85,18 @@ The LLM call reads DASHSCOPE_API_KEY or OPENAI_API_KEY unless --api-key is passe
         default=str(DEFAULT_NOTES_PROMPT_PATH),
         help="Prompt template file for study notes generation",
     )
-    parser.add_argument("--llm-model", default=DEFAULT_LLM_MODEL, help="Chat model name")
-    parser.add_argument("--api-key", default=DEFAULT_API_KEY,help="DashScope/OpenAI-compatible API key")
-    parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="OpenAI-compatible API base URL")
-    parser.add_argument("--temperature", type=float, default=0.2, help="LLM temperature (default: 0.2)")
+    parser.add_argument(
+        "--llm-model", default=DEFAULT_LLM_MODEL, help="Chat model name"
+    )
+    parser.add_argument(
+        "--api-key", default=DEFAULT_API_KEY, help="DashScope/OpenAI-compatible API key"
+    )
+    parser.add_argument(
+        "--base-url", default=DEFAULT_BASE_URL, help="OpenAI-compatible API base URL"
+    )
+    parser.add_argument(
+        "--temperature", type=float, default=0.2, help="LLM temperature (default: 0.2)"
+    )
     parser.add_argument(
         "--quiet-llm",
         action="store_true",

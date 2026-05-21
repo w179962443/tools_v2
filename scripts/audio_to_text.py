@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Transcribe one audio/video file to a timestamped CSV."""
+"""Transcribe one audio/video file to a timestamped CSV.
+
+Usage examples:
+    python scripts/audio_to_text.py audio.mp3
+    python scripts/audio_to_text.py video.mp4 -m large -l en -o transcript.csv
+"""
 
 from __future__ import annotations
 
@@ -9,7 +14,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from tools.audio_transcription_tool import WHISPER_MODELS, transcribe_audio  # noqa: E402
+from tools.audio_transcription_tool import (
+    WHISPER_MODELS,
+    transcribe_audio,
+)  # noqa: E402
 
 
 def main() -> int:

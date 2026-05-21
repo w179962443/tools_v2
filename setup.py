@@ -36,7 +36,9 @@ subtitle_requires = [
 setup(
     name="tools_v2",
     version="0.2.0",
-    description="OCR, NSFW, transcription, subtitle translation, and data workflow tools",
+    description=(
+        "OCR, NSFW, transcription, subtitle translation, and data workflow tools"
+    ),
     packages=find_packages(),
     include_package_data=True,
     package_data={"prompts": ["*.md"]},
@@ -56,17 +58,25 @@ setup(
         "realtime": audio_requires + realtime_requires,
         "diarize": audio_requires + diarize_requires,
         "subtitle": subtitle_requires,
-        "all": audio_requires + llm_requires + realtime_requires + diarize_requires + subtitle_requires,
+        "all": audio_requires
+        + llm_requires
+        + realtime_requires
+        + diarize_requires
+        + subtitle_requires,
     },
     entry_points={
         "console_scripts": [
             "ocr-tool=tools.ocr_tool:main",
+            "aliyun-ocr-image=scripts.aliyun_ocr_image:main",
+            "aliyun-ocr-render-text=scripts.render_aliyun_ocr_text_image:main",
+            "paddleocr-vl-image=scripts.paddleocr_vl_image:main",
             "nsfw-tool=tools.nsfw_tool:main",
             "ocr-filter=scripts.ocr_filter:main",
             "nsfw-filter=scripts.nsfw_filter:main",
             "audio-to-text=scripts.audio_to_text:main",
             "audio-to-text-diarize=scripts.audio_to_text_diarize:main",
             "batch-transcribe=scripts.batch_transcribe:main",
+            "judge-learning-question-csv=scripts.judge_learning_question_csv:main",
             "video-to-subtitle-notes=scripts.video_to_subtitle_notes:main",
             "extract-text-column=scripts.extract_text_column:main",
             "process-onetab=scripts.process_onetab:main",

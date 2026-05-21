@@ -6,11 +6,11 @@ Reads every image and video file in an input directory, runs NudeNet NSFW
 detection on each file, and moves detected NSFW files to separate output
 directories — one for images, one for videos.
 
-Run from the project root:
-    python scripts/nsfw_filter.py \
-        --input-dir ./media \
-        --output-images ./nsfw_images \
-        --output-videos ./nsfw_videos
+Usage examples:
+  python scripts/nsfw_filter.py --input-dir ./media --output-images ./nsfw_images \
+      --output-videos ./nsfw_videos
+  python scripts/nsfw_filter.py --input-dir ./media --output-images ./img \
+      --output-videos ./vid --dry-run
 """
 
 import argparse

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Extract one CSV column to a plain text file."""
+"""Extract one CSV column to a plain text file.
+
+Usage examples:
+    python scripts/extract_text_column.py data.csv -o text.txt
+    python scripts/extract_text_column.py data.csv -c content -o content.txt
+"""
 
 from __future__ import annotations
 
@@ -9,14 +14,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from tools.text_processing_tool import extract_text_column, read_csv_column  # noqa: E402
+from tools.text_processing_tool import (
+    extract_text_column,
+    read_csv_column,
+)  # noqa: E402
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Extract a CSV column into a UTF-8 text file.")
+    parser = argparse.ArgumentParser(
+        description="Extract a CSV column into a UTF-8 text file."
+    )
     parser.add_argument("input_file", help="Source CSV or CSV-formatted TXT file")
     parser.add_argument("-o", "--output-file", help="Output TXT path")
-    parser.add_argument("-c", "--column", default="text", help="Column name (default: text)")
+    parser.add_argument(
+        "-c", "--column", default="text", help="Column name (default: text)"
+    )
     args = parser.parse_args()
 
     try:
