@@ -48,9 +48,12 @@ pip install -e .[audio]
 pip install -e .[realtime]
 pip install -e .[subtitle]
 pip install -e .[diarize]
+pip install -e .[voice]
 ```
 
 说话人识别需要 HuggingFace Token，并需要在 HuggingFace 上接受 pyannote 模型协议。
+
+中文文本转 RVC 音色语音需要系统可用的 FFmpeg。若要使用曼波等目标音色，还需要单独准备合法可用的 RVC 模型，并按对应 RVC 后端文档安装推理环境。
 
 ## 4. VSCode 集成
 

@@ -33,11 +33,16 @@ subtitle_requires = [
     "tencentcloud-sdk-python>=3.0.0",
 ]
 
+voice_requires = [
+    "edge-tts>=6.1.0",
+    "ffmpeg-python>=0.2.0",
+]
+
 setup(
     name="tools_v2",
     version="0.2.0",
     description=(
-        "OCR, NSFW, transcription, subtitle translation, and data workflow tools"
+        "OCR, NSFW, transcription, subtitle translation, voice, and data workflow tools"
     ),
     packages=find_packages(),
     include_package_data=True,
@@ -58,11 +63,13 @@ setup(
         "realtime": audio_requires + realtime_requires,
         "diarize": audio_requires + diarize_requires,
         "subtitle": subtitle_requires,
+        "voice": voice_requires,
         "all": audio_requires
         + llm_requires
         + realtime_requires
         + diarize_requires
-        + subtitle_requires,
+        + subtitle_requires
+        + voice_requires,
     },
     entry_points={
         "console_scripts": [
@@ -83,6 +90,7 @@ setup(
             "realtime-transcriber=scripts.realtime_transcriber_web:main",
             "subtitle-translator=scripts.subtitle_translator_gui:main",
             "screen-ocr-translate=scripts.screen_ocr_translate_once:main",
+            "text-to-manbo-voice=scripts.text_to_manbo_voice:main",
         ],
     },
 )
