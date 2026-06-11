@@ -1,0 +1,32 @@
+脚本：scripts/video_to_subtitle_notes.py
+功能：从视频/音频文件生成SRT字幕、原始文本、润色文本和Markdown学习笔记。
+
+运行方式：
+  python scripts/video_to_subtitle_notes.py <视频文件> [参数]
+
+示例：
+  python scripts/video_to_subtitle_notes.py lecture.mp4 -m turbo -l zh
+  python scripts/video_to_subtitle_notes.py lecture.mp4 -o ./lecture_outputs
+  python scripts/video_to_subtitle_notes.py lecture.mp4 --skip-llm
+  python scripts/video_to_subtitle_notes.py lecture.mp4 -o ./out --llm-model qwen-plus
+
+参数说明：
+  video_file              输入视频/音频文件（必填）
+  -o, --output-dir        输出目录（默认：<视频文件名>目录）
+  -m, --whisper-model     Whisper模型大小，默认 turbo
+  -l, --language          语言代码，默认 zh
+  -d, --model-dir         Whisper模型缓存目录
+  --no-force-simplified   不强制转换为简体中文
+  --subtitle-line-chars   每行字幕最大字符数，默认 42
+  --skip-llm              仅生成转录CSV、SRT和原始文本，不调用LLM润色
+  --clean-prompt-file     文本润色的提示词文件
+  --notes-prompt-file     学习笔记的提示词文件
+  --llm-model             LLM模型名称
+  --api-key               API密钥（也可通过 DASHSCOPE_API_KEY 或 OPENAI_API_KEY 环境变量设置）
+
+输出内容：
+  <视频名>_transcript.csv   带时间戳的转录文本
+  <视频名>.srt              SRT字幕文件
+  <视频名>_raw_text.txt     原始文本
+  <视频名>_polished_text.txt 润色后的文本（需LLM）
+  <视频名>_learning_notes.md 学习笔记（需LLM）

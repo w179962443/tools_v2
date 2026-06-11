@@ -1,0 +1,27 @@
+脚本：scripts/text_to_manbo_voice.py
+功能：将中文文字转为语音，可选使用Manbo RVC模型进行声音转换。
+
+运行方式：
+  python scripts/text_to_manbo_voice.py "<文本>" [参数]
+
+示例：
+  python scripts/text_to_manbo_voice.py "今天也要元气满满。" --tts-only
+  python scripts/text_to_manbo_voice.py "今天也要元气满满。" -o out.wav --tts-only
+  python scripts/text_to_manbo_voice.py --input-text-file input.txt --tts-only
+  python scripts/text_to_manbo_voice.py "今天也要元气满满。" --model data/rvc_models/manbo/manbo.pth --rvc-command "python infer_cli.py --input {input} --output {output}"
+
+参数说明：
+  text                  要转语音的文本（必填，或使用 --input-text-file 从文件读取）
+  --input-text-file     从文件读取文本
+  -o, --output          输出WAV文件路径
+  --tts-only            仅生成TTS语音，不进行RVC转换
+  --model               RVC模型文件路径（.pth）
+  --rvc-command         RVC转换命令模板
+  --voice               TTS语音角色
+
+RVC命令占位符：
+  {input}        基础TTS WAV文件
+  {output}       最终输出WAV文件
+  {model}        RVC .pth 模型文件
+  {index}        RVC .index 文件
+  {pitch}        音高偏移（半音）

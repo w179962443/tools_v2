@@ -1,0 +1,18 @@
+脚本：scripts/screen_ocr_translate_once.py
+功能：截取屏幕指定区域，进行OCR识别并翻译为指定语言（单次执行）。
+
+运行方式：
+  python scripts/screen_ocr_translate_once.py <x1> <y1> <x2> <y2> [参数]
+
+示例：
+  python scripts/screen_ocr_translate_once.py 100 200 900 500
+  python scripts/screen_ocr_translate_once.py 100 200 900 500 --output-json out.json
+
+参数说明：
+  x1, y1, x2, y2    截取区域的左上角和右下角坐标（必填）
+  --source           源语言（默认自动检测）
+  --target           目标语言，默认 zh
+  --ocr-lang         Tesseract OCR语言，默认 chi_sim+eng
+  --tesseract-cmd    tesseract.exe 路径
+  --no-preprocess    禁用OCR预处理
+  --output-json      将结果JSON写入文件

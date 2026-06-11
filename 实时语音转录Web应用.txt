@@ -1,0 +1,20 @@
+脚本：scripts/realtime_transcriber_web.py
+功能：启动实时语音转录Web服务器，通过浏览器进行实时语音转文字。
+
+运行方式：
+  python scripts/realtime_transcriber_web.py [参数]
+
+示例：
+  python scripts/realtime_transcriber_web.py
+  python scripts/realtime_transcriber_web.py --host 127.0.0.1 --port 5001
+
+参数说明：
+  --host        绑定主机地址，默认 0.0.0.0
+  --port        绑定端口，默认 5000
+  --debug       启用Flask调试模式
+  --output-dir  转录结果输出目录，默认 recordings
+  --model       默认Whisper模型
+  --language    默认语言
+  --interval    转录间隔（秒）
+
+启动后在浏览器中访问 http://localhost:5000 即可使用。

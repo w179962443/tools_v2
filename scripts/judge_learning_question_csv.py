@@ -306,6 +306,15 @@ def load_or_initialize_output_rows(
     return [build_output_row(row) for row in input_rows]
 
 
+def is_multi_select_question(row: dict[str, str]) -> bool:
+    try:
+        payload = json.loads(str(row.get("answer", "")))
+        correct = payload.get("correct")
+        return isinstance(correct, list) and len(correct) > 1
+    except (json.JSONDecodeError, AttributeError):
+        return False
+
+
 def is_row_completed(row: dict[str, str]) -> bool:
     raw_llm_answer = str(row.get("raw_llm_answer", "")).strip()
     judge = str(row.get("judge", "")).strip()
@@ -343,6 +352,13 @@ async def judge_rows(
 
     for index, row in enumerate(rows, start=1):
         row_id = str(row.get("id", "")).strip()
+        if is_multi_select_question(row):
+            print(
+                f"[{index}/{total}] Skipping id={row_id or '<empty>'} (multi-select, skipped)",
+                flush=True,
+            )
+            continue
+
         if is_row_completed(row):
             print(
                 f"[{index}/{total}] Skipping id={row_id or '<empty>'} (already completed)",

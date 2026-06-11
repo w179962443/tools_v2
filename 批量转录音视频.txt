@@ -1,0 +1,24 @@
+脚本：scripts/batch_transcribe.py
+功能：批量转录一个目录下的所有音频/视频文件。
+
+运行方式：
+  python scripts/batch_transcribe.py <目录路径> [参数]
+
+示例：
+  python scripts/batch_transcribe.py ./media -m turbo -l zh
+  python scripts/batch_transcribe.py ./media --recursive --skip-existing
+  python scripts/batch_transcribe.py ./media --dry-run
+
+参数说明：
+  directory         要扫描的目录（必填）
+  -m, --model       Whisper模型大小，默认 turbo
+  -l, --language    语言代码，默认 zh
+  -d, --model-dir   Whisper模型缓存目录
+  -r, --recursive   递归扫描子目录
+  --skip-existing   跳过已有同名CSV的媒体文件
+  --dry-run         仅列出待处理文件，不实际转录
+  --no-force-simplified  不强制转换为简体中文
+
+支持格式：
+  音频：mp3, wav, flac, ogg, m4a, aac, wma 等
+  视频：mp4, mkv, avi, mov, webm 等

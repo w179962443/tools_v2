@@ -1,0 +1,20 @@
+脚本：scripts/aliyun_ocr_image.py
+功能：调用阿里云OCR接口，对单张图片/PDF或图片URL进行全文识别。
+
+运行方式：
+  python scripts/aliyun_ocr_image.py -i <图片路径> -o <输出文件>
+
+示例：
+  python scripts/aliyun_ocr_image.py -i data/v1.jpg -o result.json
+  python scripts/aliyun_ocr_image.py -i data/v1.jpg --text-only
+  python scripts/aliyun_ocr_image.py -i table.png --type Advanced --table
+
+参数说明：
+  -i, --input       输入图片/PDF文件路径或图片URL（必填）
+  -o, --output      输出JSON文件路径
+  --text-only       仅输出纯文本
+  --type            OCR识别类型（默认 General）
+  --table           启用表格识别
+
+配置文件：
+  config/aliyun_ocr_config.json（需填写阿里云AccessKey）

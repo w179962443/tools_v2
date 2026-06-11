@@ -1,0 +1,19 @@
+脚本：scripts/judge_learning_question_csv.py
+功能：调用大语言模型（LLM），对CSV中的每道题目自动作答，并与标准答案对比判分。
+
+运行方式：
+  python scripts/judge_learning_question_csv.py <输入CSV> [参数]
+
+示例：
+  python scripts/judge_learning_question_csv.py input.csv -o judged.csv
+  python scripts/judge_learning_question_csv.py input.csv --llm-model qwen-plus
+
+参数说明：
+  input_csv         输入CSV文件（必填，需包含 id, content, answer 三列）
+  -o, --output      输出CSV路径（默认：<输入文件名>_judged.csv）
+  --llm-model       使用的LLM模型名称
+  --api-key         API密钥（也可通过环境变量设置）
+  --base-url        API基础URL
+
+输出列：
+  id, content, answer, raw_llm_answer, judge

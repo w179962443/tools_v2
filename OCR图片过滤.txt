@@ -1,0 +1,15 @@
+脚本：scripts/ocr_filter.py
+功能：扫描目录中的图片文件，使用PaddleOCR识别文字，将含有足够文字的图片移动到输出目录。
+
+运行方式：
+  python scripts/ocr_filter.py --input-dir <输入目录> --output-dir <输出目录>
+
+示例：
+  python scripts/ocr_filter.py --input-dir ./images --output-dir ./text_images
+  python scripts/ocr_filter.py --input-dir ./images --output-dir ./out --dry-run
+
+参数说明：
+  --input-dir       输入图片目录（必填）
+  --output-dir      含文字图片的输出目录（必填）
+  --min-chars       最少字符数阈值（超过此值才认为包含文字）
+  --dry-run         仅报告检测结果，不移动文件

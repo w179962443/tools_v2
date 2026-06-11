@@ -1,0 +1,16 @@
+脚本：scripts/subtitle_translator_gui.py
+功能：屏幕字幕OCR + 翻译的图形界面工具，实时截取屏幕字幕区域并翻译显示。
+
+运行方式：
+  python scripts/subtitle_translator_gui.py [参数]
+
+示例：
+  python scripts/subtitle_translator_gui.py
+  python scripts/subtitle_translator_gui.py --ocr-lang eng --target zh
+
+参数说明：
+  --ocr-lang    Tesseract OCR语言（默认自动配置）
+  --target      目标翻译语言（默认 zh）
+
+依赖：
+  需安装 PyQt5：pip install PyQt5

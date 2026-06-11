@@ -1,0 +1,21 @@
+脚本：scripts/audio_to_text.py
+功能：使用 Whisper 将音频/视频文件转录为带时间戳的CSV文件。
+
+运行方式：
+  python scripts/audio_to_text.py <音频文件> [参数]
+
+示例：
+  python scripts/audio_to_text.py audio.mp3
+  python scripts/audio_to_text.py video.mp4 -m large -l en -o transcript.csv
+  python scripts/audio_to_text.py audio.mp3 -m turbo -l zh -d D:\whisper_models
+
+参数说明：
+  audio_file        输入音频/视频文件（必填）
+  -m, --model       Whisper模型大小，默认 base（可选：tiny/base/small/medium/large/turbo）
+  -l, --language    语言代码，默认 auto（zh/en/ja/auto 等）
+  -o, --output      输出CSV路径（默认：<输入文件名>_transcript.csv）
+  -d, --model-dir   Whisper模型缓存目录
+  --no-force-simplified  不强制转换为简体中文
+
+说明：
+  如果输出CSV已存在，会自动从上次结束的时间点继续追加（断点续转）。

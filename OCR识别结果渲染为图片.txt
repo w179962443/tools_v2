@@ -1,0 +1,18 @@
+脚本：scripts/render_aliyun_ocr_text_image.py
+功能：将阿里云OCR识别的JSON结果渲染为可阅读的图片。
+
+运行方式：
+  python scripts/render_aliyun_ocr_text_image.py -i <JSON文件> -o <输出图片>
+
+示例：
+  python scripts/render_aliyun_ocr_text_image.py -i result.json -o result.png
+  python scripts/render_aliyun_ocr_text_image.py -i result.json -o text.png --source block
+
+参数说明：
+  -i, --input       输入阿里云OCR结果JSON文件（必填）
+  -o, --output      输出图片路径（必填）
+  --source          文本来源，block 或其他（默认）
+  --width           图片宽度，默认 1080
+  --font-size       字体大小，默认 30
+  --bg-color        背景颜色，默认 #ffffff
+  --fg-color        文字颜色，默认 #111827

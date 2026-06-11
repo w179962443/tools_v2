@@ -1,0 +1,14 @@
+脚本：scripts/extract_text_column.py
+功能：从CSV文件中提取指定列，输出为纯文本文件。
+
+运行方式：
+  python scripts/extract_text_column.py <输入CSV> [参数]
+
+示例：
+  python scripts/extract_text_column.py data.csv -o text.txt
+  python scripts/extract_text_column.py data.csv -c content -o content.txt
+
+参数说明：
+  input_file        输入CSV或CSV格式的TXT文件（必填）
+  -o, --output-file 输出TXT文件路径
+  -c, --column      要提取的列名，默认 text

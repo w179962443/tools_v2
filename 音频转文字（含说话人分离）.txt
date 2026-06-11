@@ -1,0 +1,21 @@
+脚本：scripts/audio_to_text_diarize.py
+功能：使用 WhisperX 转录音频/视频文件，并进行说话人分离，输出带说话人标签的CSV。
+
+运行方式：
+  python scripts/audio_to_text_diarize.py <音频文件> [参数]
+
+示例：
+  python scripts/audio_to_text_diarize.py audio.mp3 -m turbo -l zh
+  python scripts/audio_to_text_diarize.py audio.mp3 -t hf_xxxx --min-speakers 2
+  python scripts/audio_to_text_diarize.py audio.mp3 -t hf_xxxx --min-speakers 2 --max-speakers 2
+
+参数说明：
+  audio_file        输入音频/视频文件（必填）
+  -m, --model       Whisper模型大小，默认 turbo（可选：tiny/base/small/medium/large/turbo）
+  -l, --language    语言代码，默认 zh（zh/en/auto 等）
+  -t, --token       HuggingFace token，用于说话人分离（也可设置环境变量 HF_TOKEN）
+  -o, --output      输出CSV路径（默认：<输入文件名>_diarize.csv）
+  -d, --model-dir   Whisper模型缓存目录
+  --min-speakers    最少说话人数
+  --max-speakers    最多说话人数
+  --no-force-simplified  不强制转换为简体中文

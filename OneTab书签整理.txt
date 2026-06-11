@@ -1,0 +1,14 @@
+脚本：scripts/process_onetab.py
+功能：合并、去重、分类并导出OneTab浏览器扩展导出的文本文件。
+
+运行方式：
+  python scripts/process_onetab.py --input <OneTab导出目录>
+
+示例：
+  python scripts/process_onetab.py --input d:/demo-project-onetab
+  python scripts/process_onetab.py --input d:/demo-project-onetab --output d:/output
+
+参数说明：
+  --input               OneTab导出的.txt文件所在目录（必填）
+  --output              输出目录（默认：<input>/output）
+  --separator-interval  每N条记录插入一个空行，默认 30

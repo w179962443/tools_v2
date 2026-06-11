@@ -1,0 +1,19 @@
+脚本：scripts/nsfw_filter.py
+功能：扫描目录中的图片和视频文件，检测NSFW（不良内容）并移动到指定输出目录。
+
+运行方式：
+  python scripts/nsfw_filter.py --input-dir <输入目录> --output-images <图片输出目录> --output-videos <视频输出目录>
+
+示例：
+  python scripts/nsfw_filter.py --input-dir ./media --output-images ./nsfw_images --output-videos ./nsfw_videos
+  python scripts/nsfw_filter.py --input-dir ./media --output-images ./img --output-videos ./vid --dry-run
+
+参数说明：
+  --input-dir       输入媒体文件目录（必填）
+  --output-images   NSFW图片输出目录（必填）
+  --output-videos   NSFW视频输出目录（必填）
+  --threshold       检测置信度阈值，默认 0.5
+  --sample-interval 视频帧采样间隔（秒），默认 2.0
+  --max-frames      每个视频最大检测帧数，默认 100
+  --dry-run         仅报告检测结果，不移动文件
+  --detector        检测后端，可选 nudenet/clip/falconsai，默认 nudenet

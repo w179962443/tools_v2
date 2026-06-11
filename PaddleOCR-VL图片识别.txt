@@ -1,0 +1,20 @@
+脚本：scripts/paddleocr_vl_image.py
+功能：使用 PaddleOCR-VL-1.5 对单张图片进行OCR识别，输出Markdown或JSON格式。
+
+运行方式：
+  python scripts/paddleocr_vl_image.py --image <图片路径> --output <输出文件>
+
+示例：
+  python scripts/paddleocr_vl_image.py --image ./page.png --output ./result.md
+  python scripts/paddleocr_vl_image.py -i ./page.png -o ./result.json
+  python scripts/paddleocr_vl_image.py -i ./page.png -o ./result.md --device gpu
+
+参数说明：
+  -i, --image       输入图片路径（必填）
+  -o, --output      输出文件路径（必填，支持 .md 和 .json）
+  --device          推理设备，默认 cpu（可选 gpu）
+  --format          输出格式，markdown 或 json（默认根据文件扩展名自动判断）
+
+依赖：
+  需安装 PaddlePaddle 3.2.1+ 和 PaddleOCR：
+  python -m pip install -U "paddleocr[doc-parser]"
