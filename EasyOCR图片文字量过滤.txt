@@ -1,0 +1,29 @@
+脚本：scripts/ocr_filter_easyocr.py
+功能：递归扫描目录中的图片文件，使用EasyOCR识别文字，将含文字量超过阈值的图片移动到输出目录（保留子目录结构）。
+
+与PaddleOCR版（ocr_filter.py）的区别：
+  - 使用EasyOCR替代PaddleOCR，安装更轻量，不依赖PaddlePaddle框架
+  - 递归扫描子目录（不仅是顶层）
+  - 保留图片的相对子目录结构
+  - 宽或高超过4000px的大图直接移动，不做OCR
+  - 单张图片OCR超时（>3秒）自动判定为文字过多并移动
+  - 检测+识别分步进行，达到字符阈值后立即停止，加快速度
+
+运行方式：
+  python scripts/ocr_filter_easyocr.py --input-dir <输入目录> --output-dir <输出目录>
+
+示例：
+  python scripts/ocr_filter_easyocr.py --input-dir "D:\图片\待筛选" --output-dir "D:\图片\带文字" --gpu
+  python scripts/ocr_filter_easyocr.py --input-dir ./images --output-dir ./text_images --min-chars 100
+  python scripts/ocr_filter_easyocr.py --input-dir ./images --output-dir ./out --dry-run
+
+参数说明：
+  --input-dir       输入图片目录（必填），递归扫描所有子目录
+  --output-dir      输出目录（必填），保留子目录结构
+  --min-chars       最少字符数阈值，默认50，超过此值才移动
+  --lang            EasyOCR语言代码，默认 ch_sim en（简体中文+英文）
+                    可选：ch_sim(简体) ch_tra(繁体) en(英文) ja(日文) ko(韩文)
+  --gpu             启用GPU加速
+  --dry-run         仅报告检测结果，不移动文件
+
+环境：conda activate iv

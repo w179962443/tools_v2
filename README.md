@@ -23,7 +23,8 @@ tools_v2/
 │   ├── nsfw_tool.py     # NSFW 检测工作流 + CLI
 │   └── tts_rvc_tool.py  # 中文 TTS + RVC 编排
 ├── scripts/             # 批量处理脚本（从项目根目录运行）
-│   ├── ocr_filter.py    # 按文字量过滤并移动图片
+│   ├── ocr_filter.py          # 按文字量过滤并移动图片（PaddleOCR）
+│   ├── ocr_filter_easyocr.py  # 按文字量过滤并移动图片（EasyOCR）
 │   ├── nsfw_filter.py   # 检测并移动 NSFW 图片/视频
 │   ├── audio_to_text.py
 │   ├── video_to_subtitle_notes.py
@@ -38,6 +39,7 @@ tools_v2/
 ├── docs/                # 文档
 │   ├── installation.md
 │   ├── ocr_usage.md
+│   ├── ocr_filter_easyocr_usage.md
 │   ├── nsfw_usage.md
 │   ├── audio_transcription_usage.md
 │   ├── video_learning_notes_usage.md
@@ -63,6 +65,14 @@ tools_v2/
 
 ```bash
 python scripts/ocr_filter.py --input-dir ./images --output-dir ./text_images
+```
+
+### OCR 过滤（EasyOCR 版）
+
+详见 [docs/ocr_filter_easyocr_usage.md](docs/ocr_filter_easyocr_usage.md)。
+
+```bash
+python scripts/ocr_filter_easyocr.py --input-dir ./images --output-dir ./text_images --gpu
 ```
 
 ### NSFW 过滤
