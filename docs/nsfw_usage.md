@@ -1,6 +1,54 @@
 # NSFW 检测工作流使用说明
 
-基于 [NudeNet](https://github.com/notAI-tech/NudeNet)，支持图片和视频（通过采样帧检测）。
+支持三种检测后端：**NudeNet**、**CLIP**、**Falconsai**，支持图片和视频（通过采样帧检测）。
+
+---
+
+## 检测后端对比与推荐参数
+
+| 后端        | 模型                           | 原理           | 推荐阈值 | 特点                                    |
+| ----------- | ------------------------------ | -------------- | -------- | --------------------------------------- |
+| `nudenet`   | NudeNet                        | 人体部位检测   | `0.5`    | 精确检测暴露部位，误报少，**推荐首选**  |
+| `clip`      | OpenAI CLIP ViT-B/32           | 零样本图文匹配 | `0.70`   | 语义理解强，但需较高阈值避免误报        |
+| `falconsai` | Falconsai/nsfw_image_detection | ViT 二分类     | `0.5`    | 轻量快速，仅输出 `normal`/`nsfw` 二分类 |
+
+### 推荐用法
+
+```bash
+# NudeNet（默认，最稳定）
+python scripts/nsfw_filter.py --input-dir ./media --output-images ./nsfw_images --output-videos ./nsfw_videos
+
+# CLIP（语义检测，需较高阈值）
+python scripts/nsfw_filter.py --input-dir ./media --output-images ./nsfw_images --output-videos ./nsfw_videos \
+    --detector clip --threshold 0.70
+
+# Falconsai（轻量快速）
+python scripts/nsfw_filter.py --input-dir ./media --output-images ./nsfw_images --output-videos ./nsfw_videos \
+    --detector falconsai --threshold 0.5
+```
+
+### 各后端详细说明
+
+#### NudeNet（默认）
+
+- **原理**：检测人体暴露部位（胸部、生殖器、臀部等）
+- **阈值**：默认 `0.5`，精度高，一般无需调整
+- **适用场景**：精确检测明确暴露内容
+
+#### CLIP
+
+- **原理**：将图片与多组文本提示（prompt）进行零样本匹配，取 NSFW 提示中的**最高概率**与阈值比较
+- **阈值**：默认 `0.5`，**建议设为 `0.70`–`0.80`** 以减少误报
+  - `0.60`：召回率高，但可能有较多误报
+  - `0.70`：平衡精度与召回（推荐）
+  - `0.80`：高精度，可能漏检部分 NSFW
+- **适用场景**：需要语义理解的场景（如检测暗示性内容）
+
+#### Falconsai
+
+- **原理**：基于 ViT 的二分类模型，输出 `normal` 或 `nsfw`
+- **阈值**：默认 `0.5`，一般无需调整
+- **适用场景**：快速粗筛，轻量高效
 
 ---
 
@@ -130,15 +178,16 @@ python scripts/nsfw_filter.py \
 
 ### 参数说明
 
-| 参数                | 默认值  | 说明                      |
-| ------------------- | ------- | ------------------------- |
-| `--input-dir`       | —       | 源媒体目录（必填）        |
-| `--output-images`   | —       | NSFW 图片输出目录（必填） |
-| `--output-videos`   | —       | NSFW 视频输出目录（必填） |
-| `--threshold`       | `0.5`   | 置信度阈值                |
-| `--sample-interval` | `2.0`   | 视频采样间隔（秒）        |
-| `--max-frames`      | `100`   | 每个视频最多检查帧数      |
-| `--dry-run`         | `False` | 预览模式，不移动文件      |
+| 参数                | 默认值    | 说明                                   |
+| ------------------- | --------- | -------------------------------------- |
+| `--input-dir`       | —         | 源媒体目录（必填）                     |
+| `--output-images`   | —         | NSFW 图片输出目录（必填）              |
+| `--output-videos`   | —         | NSFW 视频输出目录（必填）              |
+| `--threshold`       | `0.5`     | 置信度阈值                             |
+| `--detector`        | `nudenet` | 检测后端：`nudenet`/`clip`/`falconsai` |
+| `--sample-interval` | `2.0`     | 视频采样间隔（秒）                     |
+| `--max-frames`      | `100`     | 每个视频最多检查帧数                   |
+| `--dry-run`         | `False`   | 预览模式，不移动文件                   |
 
 ### 支持的格式
 

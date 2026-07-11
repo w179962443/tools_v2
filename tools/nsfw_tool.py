@@ -16,29 +16,15 @@ CLI Usage:
 import argparse
 import json
 import os
+import shutil
 import sys
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
-from typing import List
+from typing import Iterator, List
 
-try:
-    from nudenet import NudeDetector
-except ImportError:
-    print(
-        "Error: nudenet is not installed.\n" "Install with: pip install nudenet",
-        file=sys.stderr,
-    )
-    sys.exit(1)
-
-try:
-    import cv2
-except ImportError:
-    print(
-        "Error: opencv-python is not installed.\n"
-        "Install with: pip install opencv-python",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+_NUDE_DETECTOR_CLS = None
+_CV2_MODULE = None
 
 
 # ---------------------------------------------------------------------------
@@ -78,6 +64,66 @@ VIDEO_EXTENSIONS: set = {
     ".mpg",
     ".ts",
 }
+
+
+def _require_nudenet():
+    """Import NudeNet lazily so other detectors can work without it installed."""
+    global _NUDE_DETECTOR_CLS
+    if _NUDE_DETECTOR_CLS is None:
+        try:
+            from nudenet import NudeDetector as _NudeDetector
+        except ImportError as exc:
+            raise ImportError(
+                "nudenet is required for NSFWDetector.\n"
+                "Install with: pip install nudenet"
+            ) from exc
+        _NUDE_DETECTOR_CLS = _NudeDetector
+    return _NUDE_DETECTOR_CLS
+
+
+def _require_cv2():
+    """Import OpenCV lazily so image-only commands do not fail at import time."""
+    global _CV2_MODULE
+    if _CV2_MODULE is None:
+        try:
+            import cv2 as _cv2
+        except ImportError as exc:
+            raise ImportError(
+                "opencv-python is required for video detection.\n"
+                "Install with: pip install opencv-python"
+            ) from exc
+        _CV2_MODULE = _cv2
+    return _CV2_MODULE
+
+
+@contextmanager
+def _detector_readable_path(file_path: str) -> Iterator[str]:
+    """Yield a model-friendly path, copying to an ASCII temp path when needed.
+
+    Some Windows/OpenCV-based model stacks fail on non-ASCII source paths.
+    Copying to a short ASCII temp path avoids false read errors for files under
+    directories such as ``E:\\图\\...``.
+    """
+    normalized_path = os.fspath(file_path)
+    if normalized_path.isascii():
+        yield normalized_path
+        return
+
+    suffix = Path(normalized_path).suffix or ".bin"
+    with tempfile.TemporaryDirectory(prefix="nsfw_") as tmp_dir:
+        temp_path = os.path.join(tmp_dir, f"input{suffix}")
+        shutil.copyfile(normalized_path, temp_path)
+        yield temp_path
+
+
+def _load_pil_image(image_path: str):
+    """Load an image through Pillow in a way that is robust to Windows paths."""
+    from PIL import Image as _PILImage
+
+    with open(image_path, "rb") as image_file:
+        image = _PILImage.open(image_file)
+        image.load()
+    return image.convert("RGB")
 
 
 # ---------------------------------------------------------------------------
@@ -129,51 +175,53 @@ class _BaseNSFWDetector:
         if not os.path.exists(video_path):
             raise FileNotFoundError(f"Video not found: {video_path}")
 
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            raise ValueError(f"Cannot open video file: {video_path}")
+        cv2 = _require_cv2()
+        with _detector_readable_path(video_path) as readable_video_path:
+            cap = cv2.VideoCapture(readable_video_path)
+            if not cap.isOpened():
+                raise ValueError(f"Cannot open video file: {video_path}")
 
-        fps: float = cap.get(cv2.CAP_PROP_FPS) or 25.0
-        total_frames: int = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        frame_interval: int = max(1, int(fps * sample_interval))
+            fps: float = cap.get(cv2.CAP_PROP_FPS) or 25.0
+            total_frames: int = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            frame_interval: int = max(1, int(fps * sample_interval))
 
-        nsfw_frames: List[dict] = []
-        checked_frames: int = 0
-        is_nsfw: bool = False
+            nsfw_frames: List[dict] = []
+            checked_frames: int = 0
+            is_nsfw: bool = False
 
-        try:
-            with tempfile.TemporaryDirectory() as tmp_dir:
-                frame_idx = 0
-                while checked_frames < max_frames:
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-
-                    tmp_path = os.path.join(tmp_dir, "frame.jpg")
-                    cv2.imwrite(tmp_path, frame)
-
-                    try:
-                        img_result = self.detect_image(tmp_path)
-                        if img_result["is_nsfw"]:
-                            is_nsfw = True
-                            nsfw_frames.append(
-                                {
-                                    "frame_idx": frame_idx,
-                                    "timestamp": round(frame_idx / fps, 2),
-                                    "nsfw_labels": img_result["nsfw_labels"],
-                                }
-                            )
+            try:
+                with tempfile.TemporaryDirectory() as tmp_dir:
+                    frame_idx = 0
+                    while checked_frames < max_frames:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+                        ret, frame = cap.read()
+                        if not ret:
                             break
-                    except Exception:
-                        pass  # Skip unreadable frame
 
-                    checked_frames += 1
-                    frame_idx += frame_interval
-                    if frame_idx >= total_frames:
-                        break
-        finally:
-            cap.release()
+                        tmp_path = os.path.join(tmp_dir, "frame.jpg")
+                        cv2.imwrite(tmp_path, frame)
+
+                        try:
+                            img_result = self.detect_image(tmp_path)
+                            if img_result["is_nsfw"]:
+                                is_nsfw = True
+                                nsfw_frames.append(
+                                    {
+                                        "frame_idx": frame_idx,
+                                        "timestamp": round(frame_idx / fps, 2),
+                                        "nsfw_labels": img_result["nsfw_labels"],
+                                    }
+                                )
+                                break
+                        except Exception:
+                            pass  # Skip unreadable frame
+
+                        checked_frames += 1
+                        frame_idx += frame_interval
+                        if frame_idx >= total_frames:
+                            break
+            finally:
+                cap.release()
 
         return {
             "is_nsfw": is_nsfw,
@@ -233,13 +281,13 @@ class NSFWDetector(_BaseNSFWDetector):
         """Initialize NSFW detector.
 
         Args:
-            threshold: Minimum confidence score (0–1) for a detection to be
+            threshold: Minimum confidence score (0-1) for a detection to be
                        counted as NSFW.  Default 0.5.
         """
         if not (0.0 <= threshold <= 1.0):
             raise ValueError(f"threshold must be between 0 and 1, got {threshold}")
         self.threshold = threshold
-        self._detector: NudeDetector = NudeDetector()
+        self._detector = _require_nudenet()()
 
     # ------------------------------------------------------------------
     # Image detection
@@ -264,19 +312,29 @@ class NSFWDetector(_BaseNSFWDetector):
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image not found: {image_path}")
 
-        raw_detections: List[dict] = self._detector.detect(image_path)
+        with _detector_readable_path(image_path) as readable_image_path:
+            raw_detections: List[dict] = self._detector.detect(readable_image_path)
 
         nsfw_detections = [
             d
             for d in raw_detections
             if d.get("class") in NSFW_LABELS and d.get("score", 0.0) >= self.threshold
         ]
+        max_nsfw_score = max(
+            (
+                float(d.get("score", 0.0))
+                for d in raw_detections
+                if d.get("class") in NSFW_LABELS
+            ),
+            default=0.0,
+        )
 
         return {
             "is_nsfw": len(nsfw_detections) > 0,
             "nsfw_labels": sorted({d["class"] for d in nsfw_detections}),
             "nsfw_detections": nsfw_detections,
             "detections": raw_detections,
+            "max_nsfw_score": round(max_nsfw_score, 4),
         }
 
 
@@ -290,7 +348,7 @@ class CLIPDetector(_BaseNSFWDetector):
 
     Matches an image against a configurable list of normal and NSFW text
     prompts.  A softmax is computed over all prompts; the image is flagged
-    as NSFW when the combined probability of all NSFW prompts reaches
+    as NSFW when the **maximum** probability among all NSFW prompts reaches
     ``threshold``.
 
     Requires: ``openai-clip`` and ``torch``
@@ -300,14 +358,14 @@ class CLIPDetector(_BaseNSFWDetector):
     DEFAULT_NORMAL_PROMPTS: List[str] = [
         "a normal everyday photo",
         "a safe for work image",
+        "a landscape photograph",
+        "a family friendly picture",
     ]
     DEFAULT_NSFW_PROMPTS: List[str] = [
-        "exposed thighs",
-        "lingerie",
-        "nude body",
+        "nude person",
         "explicit sexual content",
-        "exposed genitalia",
-        "topless person",
+        "pornographic image",
+        "naked body exposed",
     ]
 
     def __init__(
@@ -320,8 +378,9 @@ class CLIPDetector(_BaseNSFWDetector):
         """Initialize the CLIP detector.
 
         Args:
-            threshold: Combined NSFW-prompt probability (0–1) above which the
-                       image is considered NSFW.  Default 0.5.
+            threshold: Maximum NSFW-prompt probability (0-1) above which the
+                       image is considered NSFW.  Default 0.5.  Recommended
+                       0.65-0.80 for balanced precision/recall.
             normal_prompts: Override the default "safe" text prompts.
             nsfw_prompts: Override the default NSFW text prompts.
             device: Torch device string (e.g. ``"cuda"`` or ``"cpu"``).
@@ -370,10 +429,8 @@ class CLIPDetector(_BaseNSFWDetector):
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image not found: {image_path}")
 
-        from PIL import Image as _PILImage
-
-        image = (
-            self._preprocess(_PILImage.open(image_path)).unsqueeze(0).to(self._device)
+        image = self._preprocess(_load_pil_image(image_path)).unsqueeze(0).to(
+            self._device
         )
         text_tokens = self._clip.tokenize(self._all_prompts).to(self._device)
 
@@ -383,7 +440,7 @@ class CLIPDetector(_BaseNSFWDetector):
 
         n_normal = len(self._normal_prompts)
         nsfw_probs = probs[n_normal:]
-        nsfw_total = sum(nsfw_probs)
+        nsfw_max = max(nsfw_probs) if nsfw_probs else 0.0
 
         # Report NSFW prompts that individually contributed meaningfully.
         nsfw_labels = [
@@ -401,9 +458,10 @@ class CLIPDetector(_BaseNSFWDetector):
         }
 
         return {
-            "is_nsfw": nsfw_total >= self.threshold,
+            "is_nsfw": nsfw_max >= self.threshold,
             "nsfw_labels": nsfw_labels,
             "scores": scores,
+            "max_nsfw_score": round(nsfw_max, 4),
         }
 
 
@@ -415,17 +473,17 @@ class CLIPDetector(_BaseNSFWDetector):
 class FalconsaiDetector(_BaseNSFWDetector):
     """NSFW detector using ``Falconsai/nsfw_image_detection`` on HuggingFace.
 
-    Uses a ViT-based image classification model with four output labels:
-    ``normal``, ``sexy``, ``porn``, ``hentai``.
+    Uses a ViT-based image classification model with **two** output labels:
+    ``normal`` and ``nsfw``.
 
-    An image is considered NSFW when any non-normal label has a confidence
+    An image is considered NSFW when the ``nsfw`` label has a confidence
     score >= ``threshold``.
 
     Requires: ``transformers`` and ``torch``
         pip install transformers torch
     """
 
-    NSFW_LABELS: set = {"sexy", "porn", "hentai"}
+    NSFW_LABELS: set = {"nsfw"}
 
     def __init__(
         self,
@@ -435,7 +493,7 @@ class FalconsaiDetector(_BaseNSFWDetector):
         """Initialize the Falconsai detector.
 
         Args:
-            threshold: Minimum score (0–1) for a non-normal label to trigger
+            threshold: Minimum score (0-1) for a non-normal label to trigger
                        an NSFW result.  Default 0.5.
             device: HuggingFace pipeline device (``"cpu"``, ``"cuda"``, or
                     device index integer as string).  Auto-detected when omitted.
@@ -487,23 +545,32 @@ class FalconsaiDetector(_BaseNSFWDetector):
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"Image not found: {image_path}")
 
-        raw_results = self._classifier(image_path)
+        raw_results = self._classifier(_load_pil_image(image_path))
         scores = {r["label"]: round(r["score"], 4) for r in raw_results}
 
         nsfw_detections = [
             r
             for r in raw_results
-            if r["label"] in self.NSFW_LABELS and r["score"] >= self.threshold
+            if r["label"].lower() in self.NSFW_LABELS and r["score"] >= self.threshold
         ]
         nsfw_labels = [
             r["label"]
             for r in sorted(nsfw_detections, key=lambda x: x["score"], reverse=True)
         ]
+        max_nsfw_score = max(
+            (
+                float(r["score"])
+                for r in raw_results
+                if r["label"].lower() in self.NSFW_LABELS
+            ),
+            default=0.0,
+        )
 
         return {
             "is_nsfw": len(nsfw_detections) > 0,
             "nsfw_labels": nsfw_labels,
             "scores": scores,
+            "max_nsfw_score": round(max_nsfw_score, 4),
         }
 
 
@@ -545,7 +612,7 @@ Examples:
         "--threshold",
         type=float,
         default=0.5,
-        help="Confidence threshold 0–1 (default: 0.5)",
+        help="Confidence threshold 0-1 (default: 0.5)",
     )
     parser.add_argument(
         "--sample-interval",

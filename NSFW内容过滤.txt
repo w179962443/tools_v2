@@ -12,8 +12,33 @@
   --input-dir       输入媒体文件目录（必填）
   --output-images   NSFW图片输出目录（必填）
   --output-videos   NSFW视频输出目录（必填）
-  --threshold       检测置信度阈值，默认 0.5
+  --threshold       检测置信度阈值（见下方各后端推荐值）
   --sample-interval 视频帧采样间隔（秒），默认 2.0
   --max-frames      每个视频最大检测帧数，默认 100
   --dry-run         仅报告检测结果，不移动文件
   --detector        检测后端，可选 nudenet/clip/falconsai，默认 nudenet
+
+各检测后端推荐参数：
+  nudenet（默认，最稳定）  --threshold 0.5
+  clip（语义检测）         --threshold 0.70   # 必须用较高阈值，否则误报多
+  falconsai（轻量二分类）  --threshold 0.5
+python scripts/nsfw_filter.py --input-dir "C:\Users\Administrator\Documents\Tencent Files\179962443\Image" --output-images "E:\图\nsfw_1" --output-videos "E:\图\nsfw_2" --detector clip
+python scripts/nsfw_filter.py --input-dir "E:\图\lizi" --output-images "E:\图\nsfw_1" --output-videos "E:\图\nsfw_2" --detector clip
+
+python scripts/nsfw_filter.py --input-dir "E:\图\lizi" --output-images "E:\图\nsfw_1" --output-videos "E:\图\nsfw_2" --detector falconsai --threshold 0.50
+
+优化建议：
+1. falconsai 继续做第一轮主筛，因为你已经验证它整体效果最好。
+2. 对 falconsai 判定为 safe、但分数接近阈值的图片，再让 clip 做第二轮复检，专门捞漏网图。
+3. nudenet / OpenCV 在 Windows 下对中文目录、非 ASCII 路径不稳定，脚本已改成自动复制到临时 ASCII 路径后再检测，不需要你再手工改文件名。
+
+推荐命令（优先试这个）：
+python scripts/nsfw_filter.py --input-dir "E:\图\lizi" --output-images "E:\图\nsfw_1" --output-videos "E:\图\nsfw_2" --detector falconsai --threshold 0.50 --secondary-detector clip --secondary-threshold 0.62 --review-score 0.20
+
+调参建议：
+- 漏检仍然偏多：把 --review-score 从 0.20 降到 0.15
+- 误报开始增多：把 --secondary-threshold 从 0.62 提到 0.68
+- 想只看会移动哪些文件：末尾加 --dry-run
+
+python scripts/nsfw_filter.py --input-dir "C:\Users\Administrator\Documents\Tencent Files\179962443" --output-images "E:\图\nsfw_1" --output-videos "E:\图\nsfw_2" --detector falconsai --threshold 0.45 --secondary-detector clip --secondary-threshold 0.55 --review-score 0.08
+

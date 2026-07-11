@@ -4,7 +4,7 @@ NSFW Filter Script
 
 Reads every image and video file in an input directory, runs NudeNet NSFW
 detection on each file, and moves detected NSFW files to separate output
-directories — one for images, one for videos.
+directories - one for images, one for videos.
 
 Usage examples:
   python scripts/nsfw_filter.py --input-dir ./media --output-images ./nsfw_images \
@@ -18,6 +18,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
+from typing import Optional
 
 # Allow running from project root without installing the package.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -35,6 +36,26 @@ _DETECTOR_MAP = {
     "clip": CLIPDetector,
     "falconsai": FalconsaiDetector,
 }
+
+
+def _build_detector(
+    detector_name: str,
+    threshold: float,
+    clip_nsfw_prompts: list = None,
+):
+    """Instantiate a detector, reusing CLIP prompt overrides when applicable."""
+    detector_cls = _DETECTOR_MAP[detector_name]
+    if detector_name == "clip" and clip_nsfw_prompts:
+        return detector_cls(threshold=threshold, nsfw_prompts=clip_nsfw_prompts)
+    return detector_cls(threshold=threshold)
+
+
+def _score_text(result: dict) -> str:
+    """Format the highest NSFW score for progress output."""
+    score = result.get("max_nsfw_score")
+    if score is None:
+        return "n/a"
+    return f"{score:.3f}"
 
 
 def _safe_dest(dest_dir: Path, src: Path) -> Path:
@@ -60,6 +81,9 @@ def process_directory(
     dry_run: bool = False,
     detector: str = "nudenet",
     clip_nsfw_prompts: list = None,
+    secondary_detector: Optional[str] = None,
+    secondary_threshold: Optional[float] = None,
+    review_score: Optional[float] = None,
 ) -> None:
     """Scan input_dir and move NSFW files to the appropriate output directory.
 
@@ -71,8 +95,12 @@ def process_directory(
         sample_interval: Seconds between sampled video frames (default 2.0).
         max_frames: Maximum frames to inspect per video (default 100).
         dry_run: Report actions without moving files.
-        detector: Detection backend — ``nudenet``, ``clip``, or ``falconsai``.
+        detector: Detection backend - ``nudenet``, ``clip``, or ``falconsai``.
         clip_nsfw_prompts: Custom NSFW text prompts for the CLIP detector.
+        secondary_detector: Optional second-pass detector for borderline images.
+        secondary_threshold: Threshold for the second-pass detector.
+        review_score: Re-check safe images when their max NSFW score is still
+            at least this value.
     """
     input_path = Path(input_dir).expanduser().resolve()
     img_out = Path(output_images_dir).expanduser().resolve()
@@ -100,12 +128,29 @@ def process_directory(
         img_out.mkdir(parents=True, exist_ok=True)
         vid_out.mkdir(parents=True, exist_ok=True)
 
-    print(f"Initializing NSFW detector ({detector})…")
-    detector_cls = _DETECTOR_MAP[detector]
-    if detector == "clip" and clip_nsfw_prompts:
-        detector_obj = detector_cls(threshold=threshold, nsfw_prompts=clip_nsfw_prompts)
-    else:
-        detector_obj = detector_cls(threshold=threshold)
+    print(f"Initializing NSFW detector ({detector})...")
+    detector_obj = _build_detector(
+        detector_name=detector,
+        threshold=threshold,
+        clip_nsfw_prompts=clip_nsfw_prompts,
+    )
+
+    secondary_obj = None
+    secondary_threshold_value = secondary_threshold
+    if secondary_detector:
+        secondary_threshold_value = (
+            threshold if secondary_threshold is None else secondary_threshold
+        )
+        print(
+            f"Initializing second-pass detector ({secondary_detector})..."
+            f"  |  threshold: {secondary_threshold_value}"
+            f"  |  review score: {review_score if review_score is not None else 'disabled'}"
+        )
+        secondary_obj = _build_detector(
+            detector_name=secondary_detector,
+            threshold=secondary_threshold_value,
+            clip_nsfw_prompts=clip_nsfw_prompts,
+        )
 
     img_moved = vid_moved = safe_count = error_count = 0
 
@@ -117,18 +162,51 @@ def process_directory(
         print(f"{prefix} {img_file.name}", end="", flush=True)
 
         try:
-            result = detector_obj.detect_image(str(img_file))
+            primary_result = detector_obj.detect_image(str(img_file))
+            primary_score = primary_result.get("max_nsfw_score", 0.0) or 0.0
+
+            result = primary_result
+            decision_detector = detector
+            reviewed = False
+
+            if (
+                secondary_obj is not None
+                and not primary_result["is_nsfw"]
+                and review_score is not None
+                and primary_score >= review_score
+            ):
+                reviewed = True
+                secondary_result = secondary_obj.detect_image(str(img_file))
+                if secondary_result["is_nsfw"]:
+                    result = secondary_result
+                    decision_detector = secondary_detector
+
             if result["is_nsfw"]:
-                labels = ", ".join(result["nsfw_labels"])
-                print(f"  →  NSFW ({labels})  →  MOVE")
+                labels = ", ".join(result["nsfw_labels"]) or "nsfw"
+                if reviewed and decision_detector == secondary_detector:
+                    print(
+                        f"  ->  NSFW via {decision_detector} after review "
+                        f"(primary score={primary_score:.3f}; labels={labels})  ->  MOVE"
+                    )
+                else:
+                    print(
+                        f"  ->  NSFW via {decision_detector} "
+                        f"(score={_score_text(result)}; labels={labels})  ->  MOVE"
+                    )
                 if not dry_run:
                     shutil.move(str(img_file), str(_safe_dest(img_out, img_file)))
                 img_moved += 1
             else:
-                print("  →  safe")
+                if reviewed:
+                    print(
+                        f"  ->  safe after {secondary_detector} review "
+                        f"(primary score={primary_score:.3f})"
+                    )
+                else:
+                    print(f"  ->  safe (score={_score_text(primary_result)})")
                 safe_count += 1
         except Exception as exc:
-            print(f"  →  ERROR: {exc}")
+            print(f"  ->  ERROR: {exc}")
             error_count += 1
 
     # ---------------------------------------------------------------
@@ -147,18 +225,18 @@ def process_directory(
             if result["is_nsfw"]:
                 first = result["nsfw_frames"][0]
                 print(
-                    f"  →  NSFW @ {first['timestamp']:.1f}s "
-                    f"(frame {first['frame_idx']})  →  MOVE"
+                    f"  ->  NSFW @ {first['timestamp']:.1f}s "
+                    f"(frame {first['frame_idx']})  ->  MOVE"
                 )
                 if not dry_run:
                     shutil.move(str(vid_file), str(_safe_dest(vid_out, vid_file)))
                 vid_moved += 1
             else:
                 checked = result["checked_frames"]
-                print(f"  →  safe  ({checked} frames checked)")
+                print(f"  ->  safe  ({checked} frames checked)")
                 safe_count += 1
         except Exception as exc:
-            print(f"  →  ERROR: {exc}")
+            print(f"  ->  ERROR: {exc}")
             error_count += 1
 
     print()
@@ -170,7 +248,7 @@ def process_directory(
         f"Errors: {error_count}"
     )
     if dry_run:
-        print("(Dry-run mode — no files were moved)")
+        print("(Dry-run mode - no files were moved)")
 
 
 def main() -> None:
@@ -206,6 +284,15 @@ Examples:
       --output-videos ./nsfw_videos \\
       --detector clip \\
       --clip-nsfw-prompts "stockings,bare legs,bikini"
+
+  # Falconsai first pass + CLIP second pass for borderline safe images
+  python scripts/nsfw_filter.py \\
+      --input-dir ./media \\
+      --output-images ./nsfw_images \\
+      --output-videos ./nsfw_videos \\
+      --detector falconsai --threshold 0.5 \\
+      --secondary-detector clip --secondary-threshold 0.62 \\
+      --review-score 0.2
 
   # Dry-run
   python scripts/nsfw_filter.py \\
@@ -244,7 +331,7 @@ Examples:
         "--threshold",
         type=float,
         default=0.5,
-        help="Confidence threshold 0–1 (default: 0.5)",
+        help="Confidence threshold 0-1 (default: 0.5)",
     )
     parser.add_argument(
         "--sample-interval",
@@ -267,6 +354,33 @@ Examples:
             "Comma-separated NSFW text prompts for the CLIP detector "
             '(e.g. "stockings,bare legs,bikini"). '
             "Only used when --detector clip is set."
+        ),
+    )
+    parser.add_argument(
+        "--secondary-detector",
+        choices=["nudenet", "clip", "falconsai"],
+        default=None,
+        help=(
+            "Optional second-pass detector for borderline images that were "
+            "classified as safe by the primary detector"
+        ),
+    )
+    parser.add_argument(
+        "--secondary-threshold",
+        type=float,
+        default=None,
+        help=(
+            "Confidence threshold for --secondary-detector. "
+            "Defaults to the primary --threshold."
+        ),
+    )
+    parser.add_argument(
+        "--review-score",
+        type=float,
+        default=None,
+        help=(
+            "When a safe image still has max_nsfw_score >= this value, run "
+            "the second-pass detector on it."
         ),
     )
     parser.add_argument(
@@ -293,6 +407,9 @@ Examples:
         dry_run=args.dry_run,
         detector=args.detector,
         clip_nsfw_prompts=clip_prompts,
+        secondary_detector=args.secondary_detector,
+        secondary_threshold=args.secondary_threshold,
+        review_score=args.review_score,
     )
 
 
